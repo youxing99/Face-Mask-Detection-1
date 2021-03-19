@@ -39,7 +39,7 @@ args = vars(ap.parse_args())
 # and batch size
 INIT_LR = 1e-4
 EPOCHS = 20
-BS = 32
+BS = 80
 
 # grab the list of images in our dataset directory, then initialize
 # the list of data (i.e., images) and class images
@@ -118,9 +118,9 @@ model.compile(loss="binary_crossentropy", optimizer=opt,
 # train the head of the network
 print("[INFO] training head...")
 H = model.fit(
-	aug.flow(trainX.repeat(), trainY.repeat(), batch_size=BS),
+	aug.flow(trainX, trainY, batch_size=BS),
 	steps_per_epoch=len(trainX) // BS,
-	validation_data=(testX.repeat(), testY.repeat()),
+	validation_data=(testX, testY),
 	validation_steps=len(testX) // BS,
 	epochs=EPOCHS)
 
