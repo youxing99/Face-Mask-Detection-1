@@ -1,27 +1,35 @@
 # USAGE
 # python train_mask_detector.py --dataset dataset
+# set the matplotlib backend so figures can be saved in the background
+import matplotlib
+
 
 # import the necessary packages
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.optimizers import Adam
+
+from sklearn.model_selection import train_test_split
+
+from keras.utils import to_categorical
 from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import AveragePooling2D
 from tensorflow.keras.layers import Dropout
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
-from tensorflow.keras.models import Model
-from tensorflow.keras.optimizers import Adam
+from sklearn.metrics import classification_report
+from sklearn.preprocessing import LabelBinarizer
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.preprocessing.image import load_img
-from tensorflow.keras.utils import to_categorical
-from sklearn.preprocessing import MultiLabelBinarizer
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+
 from imutils import paths
 import matplotlib.pyplot as plt
 import numpy as np
+
 import argparse
+
 import os
 
 # construct the argument parser and parse the arguments
@@ -35,11 +43,14 @@ ap.add_argument("-m", "--model", type=str,
 	help="path to output face mask detector model")
 args = vars(ap.parse_args())
 
+
 # initialize the initial learning rate, number of epochs to train for,
 # and batch size
 INIT_LR = 1e-4
 EPOCHS = 20
 BS = 32
+
+
 
 # grab the list of images in our dataset directory, then initialize
 # the list of data (i.e., images) and class images
@@ -47,7 +58,7 @@ print("[INFO] loading images...")
 imagePaths = list(paths.list_images(args["dataset"]))
 data = []
 labels = []
-print("[INFO] I am here pathlistimage...")
+
 # loop over the image paths
 for imagePath in imagePaths:
 	# extract the class label from the filename
@@ -61,25 +72,22 @@ for imagePath in imagePaths:
 	# update the data and labels lists, respectively
 	data.append(image)
 	labels.append(label)
-print("[INFO] I am for loop...")
 
 # convert the data and labels to NumPy arrays
 data = np.array(data, dtype="float32")
-
 labels = np.array(labels)
 
-
 # perform one-hot encoding on the labels
-lb = MultiLabelBinarizer()
+lb = LabelBinarizer()
 labels = lb.fit_transform(labels)
 labels = to_categorical(labels)
 
-print("[INFO] I am here...")
-
 # partition the data into training and testing splits using 75% of
 # the data for training and the remaining 25% for testing
-(trainX, testX, trainY, testY) = train_test_split(data, labels,
-	test_size=0.20, stratify=labels, random_state=42)
+(trainX, testX, trainY, testY) = train_test_split(data, labels, test_size=0.20, random_state=42)
+
+
+
 
 print("[INFO] I am here of train_test_split...")
 
@@ -95,8 +103,7 @@ aug = ImageDataGenerator(
 
 # load the MobileNetV2 network, ensuring the head FC layer sets are
 # left off
-baseModel = MobileNetV2(weights="imagenet", include_top=False,
-	input_tensor=Input(shape=(224, 224, 3)))
+baseModel = MobileNetV2(weights="imagenet", include_top=False, input_tensor=Input(shape=(224, 224, 3)))
 print("[INFO] I am here of mobilenet loading...")
 
 # construct the head of the model that will be placed on top of the
