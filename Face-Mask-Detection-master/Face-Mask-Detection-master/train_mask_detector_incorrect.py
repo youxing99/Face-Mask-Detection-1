@@ -1,6 +1,6 @@
 # USAGE
 # python train_mask_detector_i.py --dataset dataset
-
+#APPPLLELEE
 # import the necessary packages
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import MobileNetV2
@@ -23,6 +23,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import os
+#from sklearn import svm, datasets
+#from sklearn.metrics import plot_confusion_matrix
+from sklearn.metrics import confusion_matrix
+from mlxtend.plotting import plot_confusion_matrix
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -30,6 +34,12 @@ ap.add_argument("-d", "--dataset", required=True,
 	help="path to input dataset")
 ap.add_argument("-p", "--plot", type=str, default="plot.png",
 	help="path to output loss/accuracy plot")
+ap.add_argument("-p3", "--plot_loss", type=str, default="plot_loss.png",
+	help="path to output loss plot")
+ap.add_argument("-p4", "--plot_accuracy", type=str, default="plot_accuracy.png",
+	help="path to output accuracy plot")
+ap.add_argument("-p2", "--plot2", type=str, default="plot_matrix.png",
+	help="path to confusion matrix")
 ap.add_argument("-m", "--model", type=str,
 	default="mask_detector.model",
 	help="path to output face mask detector model")
@@ -38,7 +48,7 @@ args = vars(ap.parse_args())
 # initialize the initial learning rate, number of epochs to train for,
 # and batch size
 INIT_LR = 1e-4
-EPOCHS = 20
+EPOCHS = 2
 BS = 32
 
 # grab the list of images in our dataset directory, then initialize
@@ -136,9 +146,43 @@ predIdxs = np.argmax(predIdxs, axis=1)
 print(classification_report(testY.argmax(axis=1), predIdxs,
 	target_names=lb.classes_))
 
+
 # serialize the model to disk
 print("[INFO] saving mask detector model...")
 model.save(args["model"], save_format="h5")
+
+
+
+
+
+
+# classifier = svm.SVC(kernel='linear', C=0.01).fit(trainX, trainY)
+# np.set_printoptions(precision=2)
+# # Plot non-normalized confusion matrix
+# titles_options = [("Confusion matrix, without normalization", None), ("Normalized confusion matrix", 'true')]
+# for title, normalize in titles_options:
+# 	disp = plot_confusion_matrix(classifier,testX, testY, display_labels=labels, cmap=plt.cm.Blues, normalize=normalize)
+#
+# 	disp.ax_.set_title(title)
+#
+# 	print(title)
+# 	print(disp.confusion_matrix)
+# plt.show()
+# plt.savefig(args["plot2"])
+
+
+mat = confusion_matrix(testY.argmax(axis=1), predIdxs)
+plt.figure()
+plt.title("Confusion Matrix")
+plot_confusion_matrix(conf_mat=mat, figsize=(11,11), class_names=lb.classes_)
+plt.savefig(args["plot2"])
+
+
+
+
+#class_names=['incorrect_mask','with_mask','without_mask']
+
+
 
 # plot the training loss and accuracy
 N = EPOCHS
@@ -153,3 +197,27 @@ plt.xlabel("Epoch #")
 plt.ylabel("Loss/Accuracy")
 plt.legend(loc="lower left")
 plt.savefig(args["plot"])
+
+#plot training loss
+N = EPOCHS
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(np.arange(0, N), H.history["loss"], label="train_loss")
+plt.plot(np.arange(0, N), H.history["val_loss"], label="val_loss")
+plt.title("Training Loss")
+plt.xlabel("Epoch #")
+plt.ylabel("Loss")
+plt.legend(loc="lower left")
+plt.savefig(args["plot_loss"])
+
+#plot accuracy
+N = EPOCHS
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(np.arange(0, N), H.history["accuracy"], label="train_acc")
+plt.plot(np.arange(0, N), H.history["val_accuracy"], label="val_acc")
+plt.title("Accuracy")
+plt.xlabel("Epoch #")
+plt.ylabel("Accuracy")
+plt.legend(loc="lower left")
+plt.savefig(args["plot_accuracy"])
